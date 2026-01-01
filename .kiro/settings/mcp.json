@@ -1,0 +1,19 @@
+{
+  "mcpServers": {
+    "lm-studio": {
+      "command": "node",
+      "args": ["lm-studio-mcp-server/dist/index.js"],
+      "env": {
+        "LM_STUDIO_ENDPOINT": "http://10.171.217.128:1234",
+        "LOG_LEVEL": "info",
+        "DISCOVERY_ENABLED": "true",
+        "MAX_CONTEXT_TOKENS": "4096"
+      },
+      "disabled": false,
+      "autoApprove": [
+        "model-list",
+        "context-refresh"
+      ]
+    }
+  }
+}

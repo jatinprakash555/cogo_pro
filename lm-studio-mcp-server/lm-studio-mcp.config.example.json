@@ -1,0 +1,10 @@
+{
+  "lmStudioEndpoint": "http://10.171.217.128:1234",
+  "defaultModel": "",
+  "maxContextTokens": 4096,
+  "reconnectAttempts": 5,
+  "reconnectDelay": 1000,
+  "logLevel": "info",
+  "discoveryEnabled": true,
+  "discoveryInterval": 30000
+}
