@@ -20,8 +20,8 @@ class ModelManager(private val context: Context) {
     companion object {
         private const val MODEL_FILENAME = "gemma-2b-it-gpu-int4.bin"
         
-        // IMPORTANT: The user will provide this link from their GitHub Release/HuggingFace/etc.
-        private const val MODEL_URL = "REPLACE_WITH_YOUR_DIRECT_DOWNLOAD_LINK"
+        // Official model download link from GitHub Releases
+        private const val MODEL_URL = "https://github.com/jatinprakash555/cogo_pro/releases/download/v1.0/gemma-2b-it-gpu-int4.bin"
         
         private const val CHUNK_SIZE = 1024 * 1024L // 1MB chunks for smoother UI progress
     }
