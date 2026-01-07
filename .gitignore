@@ -1,0 +1,30 @@
+# Android
+# *.apk
+*.ap_
+*.dex
+*.class
+bin/
+gen/
+out/
+build/
+.gradle/
+local.properties
+.idea/
+*.iml
+.DS_Store
+
+# Large Models
+gemma-2b-it-gpu-int4.bin
+gemma-2b-it-gpu-int4.bin.*
+model/
+
+# Logs
+*.log
+build_log*.txt
+build_push_log*.txt
+
+# Batch/Scripts
+merge_model.*
+setup_new_device.bat
+install_cogo.bat
+split_model.py
