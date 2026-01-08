@@ -119,20 +119,37 @@ Goal: Be a helpful, honest companion. If asked for something you cannot do (like
     }
 
     private suspend fun initializeWithShaderSimulation() {
-         // Simulate Shader Loading / Optimization for the user experience
+         // Step 1: LLM Initialization
          _prepareStatusText.value = "Compiling Neural Shaders..."
-         delay(800)
-         _prepareStatusText.value = "Optimizing Compute Graph..."
-         delay(1200)
-
+         delay(1000)
+         
+         android.util.Log.i("CogoPro", "Starting LLM Initialization...")
          val success = repository.textGenerator.initialize()
-         val ragSuccess = ragRepository.initializeEmbedder() // Ensure loaded
+         
+         if (!success) {
+             _modelStatus.value = ModelStatus.ERROR
+             _prepareStatusText.value = "Model Initialization Failed"
+             return
+         }
+
+         // Step 2: Stability Pause
+         // Critical for Snapdragon: allow memory buffers to settle before next allocation
+         _prepareStatusText.value = "Optimizing Compute Graph..."
+         delay(1500) 
+
+         // Step 3: Embedder Initialization
+         android.util.Log.i("CogoPro", "Starting Embedder Initialization...")
+         val ragSuccess = ragRepository.initializeEmbedder()
          
          if (success) {
               _prepareStatusText.value = "Cogo is Ready"
              _modelStatus.value = ModelStatus.READY
          } else {
-             _modelStatus.value = ModelStatus.ERROR
+             // We still mark as ready if LLM is okay but RAG failed, 
+             // but log it. Future: maybe a partial-ready state?
+             android.util.Log.w("CogoPro", "LLM Ready but RAG Embedder failed.")
+             _prepareStatusText.value = "Cogo is Ready (No Docs)"
+             _modelStatus.value = ModelStatus.READY
          }
     }
 

@@ -40,77 +40,79 @@ class TextGenerator(val context: Context) {
                 return@withContext true
             }
 
-        // Close old instance if exists
-        try {
-            llmInference?.close()
-            llmInference = null
-        } catch (e: Exception) {
-            android.util.Log.e("CogoPro", "Error closing old model", e)
-        }
+            // Close old instance if exists to release memory
+            try {
+                llmInference?.close()
+                llmInference = null
+            } catch (e: Exception) {
+                android.util.Log.e("CogoPro", "Error closing old model", e)
+            }
 
-        val modelManager = ModelManager(context)
-        val modelPath = try {
-            modelManager.getModelPath()
-        } catch (e: Exception) {
-            android.util.Log.e("CogoPro", "Failed to get model path", e)
-            null
-        }
-        
-        if (modelPath == null) {
-            android.util.Log.e("CogoPro", "Model path is null")
-            return@withContext false
-        }
-        
-        val modelFile = File(modelPath)
-        if (!modelFile.exists() || modelFile.length() < 1000000) {
-            android.util.Log.e("CogoPro", "Model file invalid: ${modelFile.exists()} / ${modelFile.length()}")
-            return@withContext false
-        }
-
-
-
-    // Remove resultListener val
-        
-        // Stage 1: Try GPU (High Performance)
-        try {
-            android.util.Log.i("CogoPro", "Attempting GPU Initialization (Android 15 Comp)...")
-             val options = LlmInference.LlmInferenceOptions.builder()
-                .setModelPath(modelPath)
-                .setMaxTokens(1024)
-
-                .build()
-            
-            withTimeout(5000) {
-                 llmInference = LlmInference.createFromOptions(context, options)
+            val modelManager = ModelManager(context)
+            val modelPath = try {
+                modelManager.getModelPath()
+            } catch (e: Exception) {
+                android.util.Log.e("CogoPro", "Failed to get model path", e)
+                null
             }
             
-            isInitialized = true
-            android.util.Log.i("CogoPro", "Success: GPU Initialized.")
-            return@withContext true
-        } catch (e: Exception) {
-            android.util.Log.w("CogoPro", "GPU Init failed (${e.message}). Switching to CPU...")
-        }
-
-        // Stage 2: Universal Fallback (CPU)
-        try {
-            android.util.Log.i("CogoPro", "Attempting Universal CPU Initialization...")
-             val options = LlmInference.LlmInferenceOptions.builder()
-                .setModelPath(modelPath)
-                .setMaxTokens(1024)
-                .setPreferredBackend(LlmInference.Backend.CPU)
-
-                .build()
+            if (modelPath == null) {
+                android.util.Log.e("CogoPro", "Model path is null")
+                return@withContext false
+            }
             
-            llmInference = LlmInference.createFromOptions(context, options)
-            
-            isInitialized = true
-            android.util.Log.i("CogoPro", "Success: CPU Initialized (Universal Mode).")
-            return@withContext true
-        } catch (e: Exception) {
-            android.util.Log.e("CogoPro", "Model Init Failed: ${e.message}")
-            return@withContext false
+            val modelFile = File(modelPath)
+            if (!modelFile.exists() || modelFile.length() < 1000000) {
+                android.util.Log.e("CogoPro", "Model file invalid: ${modelFile.exists()} / ${modelFile.length()}")
+                return@withContext false
+            }
+
+            // Stage 1: Try GPU (High Performance)
+            try {
+                android.util.Log.i("CogoPro", "Attempting GPU Initialization (Android 15 Comp)...")
+                val options = LlmInference.LlmInferenceOptions.builder()
+                    .setModelPath(modelPath)
+                    .setMaxTokens(1024)
+                    .build()
+                
+                withTimeout(8000) { // Increased timeout for slower initializations
+                    llmInference = LlmInference.createFromOptions(context, options)
+                }
+                
+                isInitialized = true
+                android.util.Log.i("CogoPro", "Success: GPU Initialized.")
+                return@withContext true
+            } catch (e: Exception) {
+                android.util.Log.w("CogoPro", "GPU Init failed: ${e.message}. Cleaning up...")
+                // CRITICAL: Explicitly release partial allocations before switching to CPU
+                llmInference?.close()
+                llmInference = null
+                
+                // Stability Delay: Allow driver to reclaim memory on Snapdragon
+                android.util.Log.i("CogoPro", "Waiting for driver buffer release...")
+                kotlinx.coroutines.delay(1000) 
+            }
+
+            // Stage 2: Universal Fallback (CPU)
+            try {
+                android.util.Log.i("CogoPro", "Attempting Universal CPU Initialization...")
+                val options = LlmInference.LlmInferenceOptions.builder()
+                    .setModelPath(modelPath)
+                    .setMaxTokens(1024)
+                    .setPreferredBackend(LlmInference.Backend.CPU)
+                    .build()
+                
+                llmInference = LlmInference.createFromOptions(context, options)
+                
+                isInitialized = true
+                android.util.Log.i("CogoPro", "Success: CPU Initialized (Universal Mode).")
+                return@withContext true
+            } catch (e: Exception) {
+                android.util.Log.e("CogoPro", "Model Init Failed Entirely: ${e.message}")
+                return@withContext false
+            }
         }
-    } }
+    }
 
     fun generateStreamingResponse(prompt: String): Flow<String> = flow {
         if (!isInitialized || llmInference == null) {

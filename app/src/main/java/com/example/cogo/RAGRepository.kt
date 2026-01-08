@@ -25,18 +25,28 @@ class RAGRepository(private val context: Context, private val modelManager: Mode
             android.util.Log.e("CogoPro", "RAG Init Failed: Model path is null")
             return false
         }
+
+        // Cleanup old embedder to free resources
+        try {
+            textEmbedder?.close()
+            textEmbedder = null
+        } catch (e: Exception) {
+            android.util.Log.w("CogoPro", "Error closing old embedder", e)
+        }
+
         val baseOptions = BaseOptions.builder().setModelAssetPath(modelPath).build()
         val options = TextEmbedderOptions.builder().setBaseOptions(baseOptions).build()
         
-        try {
+        return try {
+            val startTime = System.currentTimeMillis()
             withContext(Dispatchers.Main) { // MediaPipe init often requires main thread or Looper
                  textEmbedder = TextEmbedder.createFromOptions(context, options)
             }
-            android.util.Log.i("CogoPro", "RAG Embedder Initialized Successfully")
-            return true
+            android.util.Log.i("CogoPro", "RAG Embedder Initialized in ${System.currentTimeMillis() - startTime}ms")
+            true
         } catch (e: Exception) {
             android.util.Log.e("CogoPro", "RAG Embedder Init Error", e)
-            return false
+            false
         }
     }
 

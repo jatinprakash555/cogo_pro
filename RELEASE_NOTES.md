@@ -1,3 +1,23 @@
+# Release v1.1.0: Cogo Pro - Snapdragon Stability & Robust Init
+
+**Release Date:** January 8, 2026
+**Version:** 1.1.0-snapdragon
+
+## 🆕 New in this Release
+
+### 1. Snapdragon (Adreno GPU) Stability
+- **Resolved**: Addressed RAM spikes and crashes occurring during model initialization on Snapdragon devices.
+- **Robust Initialization**: Implemented a staggered, sequential loading pipeline for the LLM and the RAG Embedder.
+- **Buffer Recovery**: Added stability delays (1.0s - 1.5s) between model allocations to allow the mobile GPU driver to release and reclaim memory buffers safely.
+- **Explicit Cleanup**: Ensured all hardware-accelerated resources are explicitly closed before re-initialization or backend fallback.
+
+## 📦 Installation
+1. Download `app-debug.apk` from the latest release.
+2. Install and launch.
+3. Observe the "Optimizing Compute Graph" phase, which now manages the staged loading flow.
+
+---
+
 # Release v1.0.0: Cogo Pro - Universal Local AI & RAG Assistant
 
 **Release Date:** January 7, 2026
